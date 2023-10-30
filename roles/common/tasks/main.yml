@@ -1,0 +1,76 @@
+---
+
+- name: Uninstall undesired packages.
+  become: true
+  apt:
+    purge: true
+    autoremove: true
+    pkg:
+    - cloud-init
+
+- name: Delete cloud-init directories.
+  become: true
+  ansible.builtin.file:
+    state: absent
+    path:
+      - /etc/cloud/
+      - /var/lib/cloud/
+
+- name: Install packages.
+  become: true
+  apt:
+    pkg:
+    - lm-sensors
+
+- name: Distribute cluster nodes to all /etc/hosts files.
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/hosts
+    marker: "# ANSIBLE MANAGED - {mark}"
+    block: |
+      {% for host in groups['all'] %}
+      {{ ipv4_subnet_prefix }}.{{ hostvars[host].ipv4_host_octets }} {{ host }}
+      {% endfor %}
+
+- name: Remove cloud init network interface definitions.
+  become: true
+  ansible.builtin.file:
+    path: /etc/netplan/50-cloud-init.yaml
+    state: absent
+
+- name: Add ethernet interface with static IP.
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/netplan/99-config.yaml
+    create: true
+    mode: '600'
+    marker: "# ANSIBLE MANAGED - {mark}"
+    block: |
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          {{ ethernet_interface }}:
+            dhcp4: no
+            addresses: [ {{ ipv4_subnet_prefix }}.{{ ipv4_host_octets }}/{{ ipv4_subnet_mask }} ]
+            routes:
+              - to: default
+                via: {{ ipv4_default_route }}
+            nameservers:
+              addresses: [ {{ ipv4_default_route }} ]
+
+- name: Netplan apply
+  become: true
+  command: netplan apply
+  async: 45
+  poll: 0
+
+- name: Check if a reboot is required.
+  stat:
+    path: /var/run/reboot-required
+    get_md5: no
+  register: reboot_required_file
+
+- name: Reboot the server (if required).
+  reboot:
+  when: reboot_required_file.stat.exists == true

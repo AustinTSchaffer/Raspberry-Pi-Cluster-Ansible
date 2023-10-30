@@ -1,0 +1,4 @@
+ipv4_subnet_prefix: "192.168.0"
+ipv4_subnet_mask: "24"
+ipv4_default_route: "192.168.0.1"
+ethernet_interface: "eth0"

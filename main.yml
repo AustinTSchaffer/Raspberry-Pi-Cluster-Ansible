@@ -1,0 +1,13 @@
+---
+
+- hosts: available_nodes
+  vars_files:
+    - config.yml
+  roles:
+    - role: common
+
+- hosts: control_nodes
+  vars_files:
+    - config.yml
+  roles:
+    - role: control
