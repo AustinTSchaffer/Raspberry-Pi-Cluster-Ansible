@@ -7,10 +7,11 @@ The Raspberry Pis were flashed using the Raspberry Pi Imager tool, using
 "Ubuntu 23.10" as the base OS. Some of the configuration weirdness is to
 account for (undo) some of the work that Cloud Init is doing.
 
-## TODO
+## TODO and Ideas
 
 - [ ] Can linux expose prometheus metrics?
 - [ ] DNS on controller node instead of editing hosts files?
+- [ ] Set up one of the nodes as a bridged wifi router. Use it to sniff traffic from wifi-enabled devices.
 
 ## Mistakes
 
@@ -31,6 +32,8 @@ top
 - One one iteration I selected the latest version of Ubuntu Server instead of the
   latest LTS version. I spent 2 hours trying to fix the PoE+ hat fans, which were
   running full blast at 40C.
+- Setting up the ansible scripts and deployment environment such that it was
+  not possible to easily fix common mistakes.
 
 ### Networking Mistakes
 
@@ -47,3 +50,5 @@ hosts remotely.
   the cluster's subnet. I assumed that I could use a `/29` subnet mask for
   my cluster without a piece of hardware which lives at the first address in
   that range.
+- Using netplan apply instead of netplan try assumes that you got the networking
+  configuration right on the first try.

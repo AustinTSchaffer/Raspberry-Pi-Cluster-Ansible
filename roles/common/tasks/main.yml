@@ -21,6 +21,7 @@
   apt:
     pkg:
     - lm-sensors
+    - iperf3
 
 - name: Distribute cluster nodes to all /etc/hosts files.
   become: true
@@ -59,6 +60,7 @@
             nameservers:
               addresses: [ {{ ipv4_default_route }} ]
 
+# TODO: Swap this out for netplan try.
 - name: Netplan apply
   become: true
   command: netplan apply
