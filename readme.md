@@ -1,5 +1,7 @@
 # Local Pi Cluster
 
+![](./images/cluster.jpg)
+
 This repository contains an Ansible playbook for setting up and managing
 a cluster of Raspberry Pis 4s.
 
