@@ -1,0 +1,3 @@
+{
+    "insecure-registries" : [ "rpi-cluster-4b-1gb-1:5000" ]
+}

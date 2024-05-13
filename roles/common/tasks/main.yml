@@ -3,10 +3,10 @@
 - name: Uninstall undesired packages.
   become: true
   ansible.builtin.apt:
-    purge: true
     autoremove: true
     pkg:
       - cloud-init
+    state: absent
 
 - name: Delete cloud-init directories.
   become: true
@@ -19,9 +19,63 @@
 - name: Install packages.
   become: true
   ansible.builtin.apt:
+    update_cache: true
     pkg:
       - lm-sensors
       - iperf3
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+
+- name: Check if node already has Docker's GPG Key.
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/docker-archive-keyring.gpg
+    get_checksum: no
+  register: has_docker_gpg_key
+
+- name: Get Docker's Official GPG Key
+  become: true
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  when: not has_docker_gpg_key
+
+- name: Check if node already has Docker's Repository.
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/docker.list
+    get_checksum: no
+  register: has_docker_apt_repo
+
+- name: Add Docker repository.
+  become: true
+  ansible.builtin.apt_repository:
+    filename: /etc/apt/sources.list.d/docker.list
+    repo: "deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    update_cache: false
+    codename: stable
+  when: not has_docker_apt_repo
+
+- name: Install Docker.
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+
+- name: Add support for insecure registry.
+  become: true
+  ansible.builtin.copy:
+    src: ./files/docker-daemon.json
+    dest: /etc/docker/daemon.json
+  register: restart_docker_daemon
+
+- name: Upgrade packages.
+  become: true
+  ansible.builtin.apt:
+    upgrade: "yes"
 
 - name: Distribute cluster nodes to all /etc/hosts files.
   become: true
@@ -70,9 +124,10 @@
 - name: Check if a reboot is required.
   ansible.builtin.stat:
     path: /var/run/reboot-required
-    get_md5: no
+    get_checksum: no
   register: reboot_required_file
 
 - name: Reboot the server (if required).
+  become: true
   ansible.builtin.reboot:
-  when: reboot_required_file.stat.exists
+  when: reboot_required_file.stat.exists or restart_docker_daemon
