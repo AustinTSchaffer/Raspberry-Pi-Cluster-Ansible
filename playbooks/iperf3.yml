@@ -16,7 +16,7 @@
         iperf_server: "{{ groups['iperf_grp_a'][groups['iperf_grp_b'].index(inventory_hostname)] }}"
     - name: Determine iperf3 result output filename.
       ansible.builtin.set_fact:
-        iperf_out: "iperf3_{{ inventory_hostname }}_{{ iperf_server }}_{{ ansible_date_time.iso8601_basic_short }}.out"
+        iperf_out: "iperf3_{{ ansible_date_time.iso8601_basic_short }}_{{ inventory_hostname }}_{{ iperf_server }}.out"
     - name: Run iperf3 client.
       ansible.builtin.shell:
         cmd: "iperf3 --client {{ iperf_server }} >> {{ iperf_out }}"
