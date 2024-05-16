@@ -27,10 +27,16 @@
       - curl
       - gnupg
 
+- name: Setup htop UI
+  become: false
+  ansible.builtin.copy:
+    src: ./files/htoprc
+    dest: "/home/{{ ansible_user_id }}/.config/htop/htoprc"
+
 - name: Check if node already has Docker's GPG Key.
   ansible.builtin.stat:
     path: /usr/share/keyrings/docker-archive-keyring.gpg
-    get_checksum: no
+    get_checksum: false
   register: has_docker_gpg_key
 
 - name: Get Docker's Official GPG Key
@@ -42,7 +48,7 @@
 - name: Check if node already has Docker's Repository.
   ansible.builtin.stat:
     path: /etc/apt/sources.list.d/docker.list
-    get_checksum: no
+    get_checksum: false
   register: has_docker_apt_repo
 
 - name: Add Docker repository.
